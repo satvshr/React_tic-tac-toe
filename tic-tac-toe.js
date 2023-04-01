@@ -29,25 +29,24 @@ function Board({ xIsNext, squares, onPlay }) {
   } else {
     status = 'Next player: ' + (xIsNext ? 'X' : 'O');
   }
-
+  let z = 0;
   return (
     <>
       <div className="status">{status}</div>
-      <div className="board-row">
-        <Square value={squares[0]} onSquareClick={() => handleClick(0)} />
-        <Square value={squares[1]} onSquareClick={() => handleClick(1)} />
-        <Square value={squares[2]} onSquareClick={() => handleClick(2)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[3]} onSquareClick={() => handleClick(3)} />
-        <Square value={squares[4]} onSquareClick={() => handleClick(4)} />
-        <Square value={squares[5]} onSquareClick={() => handleClick(5)} />
-      </div>
-      <div className="board-row">
-        <Square value={squares[6]} onSquareClick={() => handleClick(6)} />
-        <Square value={squares[7]} onSquareClick={() => handleClick(7)} />
-        <Square value={squares[8]} onSquareClick={() => handleClick(8)} />
-      </div>
+      {[...Array(3)].map((_, x) => (
+        <div className="board-row" key={x}>
+          {[...Array(3)].map((_, y) => {
+            const i = z++;
+            return (
+              <Square
+                key={i}
+                value={squares[i]}
+                onSquareClick={() => handleClick(i)}
+              />
+            );
+          })}
+        </div>
+      ))}
     </>
   );
 }
@@ -57,6 +56,8 @@ export default function Game() {
   const [currentMove, setCurrentMove] = useState(0);
   const xIsNext = currentMove % 2 === 0;
   const currentSquares = history[currentMove];
+  const [isInverse, setInverse] = useState(true);
+  let rev = isInverse ? [...history].reverse() : history;
 
   function handlePlay(nextSquares) {
     const nextHistory = [...history.slice(0, currentMove + 1), nextSquares];
@@ -68,16 +69,30 @@ export default function Game() {
     setCurrentMove(nextMove);
   }
 
-  const moves = history.map((squares, move) => {
+  function inverse() {
+    setInverse(!isInverse);
+  }
+
+  let moves = rev.map((squares, move) => {
+    const displayMove = isInverse ? rev.length - 1 - move : move;
     let description;
-    if (move > 0) {
-      description = 'Go to move #' + move;
+    if (displayMove === rev.length - 1) {
+      description = 'You are at move #' + displayMove;
+      return (
+        <li key={displayMove}>
+          {description}
+        </li>
+      ); 
+    }
+    else if (displayMove > 0) {
+      description = 'Go to move #' + displayMove;
     } else {
       description = 'Go to game start';
     }
+    
     return (
-      <li eky={move}>
-        <button onClick={() => jumpTo(move)}>{description}</button>
+      <li key={displayMove}>
+        <button onClick={() => jumpTo(displayMove)}>{description}</button>
       </li>
     );
   });
@@ -88,6 +103,7 @@ export default function Game() {
         <Board xIsNext={xIsNext} squares={currentSquares} onPlay={handlePlay} />
       </div>
       <div className="game-info">
+        <button onClick={inverse}>Inverse the order?</button>
         <ol>{moves}</ol>
       </div>
     </div>
